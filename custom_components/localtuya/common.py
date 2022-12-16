@@ -4,6 +4,7 @@ import logging
 import time
 from datetime import timedelta
 
+import tinytuya
 from homeassistant.const import (
     CONF_DEVICE_ID,
     CONF_DEVICES,
@@ -23,20 +24,19 @@ from homeassistant.helpers.dispatcher import (
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import pytuya
 from .const import (
+    ATTR_STATE,
     ATTR_UPDATED_AT,
+    CONF_DEFAULT_VALUE,
     CONF_LOCAL_KEY,
     CONF_MODEL,
+    CONF_PASSIVE_ENTITY,
     CONF_PROTOCOL_VERSION,
+    CONF_RESET_DPIDS,
+    CONF_RESTORE_ON_RECONNECT,
     DATA_CLOUD,
     DOMAIN,
     TUYA_DEVICES,
-    CONF_DEFAULT_VALUE,
-    ATTR_STATE,
-    CONF_RESTORE_ON_RECONNECT,
-    CONF_RESET_DPIDS,
-    CONF_PASSIVE_ENTITY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -127,8 +127,8 @@ def async_config_entry_by_device_id(hass, device_id):
     return None
 
 
-class TuyaDevice(pytuya.TuyaListener, pytuya.ContextualLogger):
-    """Cache wrapper for pytuya.TuyaInterface."""
+class TuyaDevice(tinytuya.TuyaListener, tinytuya.ContextualLogger):
+    """Cache wrapper for tinytuya.TuyaInterface."""
 
     def __init__(self, hass, config_entry, dev_id):
         """Initialize the cache."""
@@ -183,7 +183,7 @@ class TuyaDevice(pytuya.TuyaListener, pytuya.ContextualLogger):
         self.debug("Connecting to %s", self._dev_config_entry[CONF_HOST])
 
         try:
-            self._interface = await pytuya.connect(
+            self._interface = await tinytuya.connect(
                 self._dev_config_entry[CONF_HOST],
                 self._dev_config_entry[CONF_DEVICE_ID],
                 self._local_key,
@@ -359,7 +359,7 @@ class TuyaDevice(pytuya.TuyaListener, pytuya.ContextualLogger):
         self.debug("Disconnected - waiting for discovery broadcast")
 
 
-class LocalTuyaEntity(RestoreEntity, pytuya.ContextualLogger):
+class LocalTuyaEntity(RestoreEntity, tinytuya.ContextualLogger):
     """Representation of a Tuya entity."""
 
     def __init__(self, device, config_entry, dp_id, logger, **kwargs):
